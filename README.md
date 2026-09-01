@@ -113,11 +113,9 @@ Users can enter values for the selected development indicators and receive an es
 ```text
 life-expectancy-wdi/
 │
-├── notebook/
-│   └── Life_Expectancy_WDI_Capstone.ipynb
+├── Week08_WDI-Life-Expectancy-Prediction.ipynb
 │
-├── deployment/
-│   ├── app.py
+├── ├── app.py
 │   ├── requirements.txt
 │   └── random_forest_model.joblib
 │
