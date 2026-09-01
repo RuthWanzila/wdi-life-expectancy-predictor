@@ -4,8 +4,9 @@ import pandas as pd
 import joblib
 import os
 
+
 # ============================================================
-# LOAD BEST MODEL
+# LOAD MODEL
 # ============================================================
 
 final_model = joblib.load("random_forest_model.joblib")
@@ -28,11 +29,10 @@ def predict_life_expectancy(
     clean_water_access
 ):
 
-    # Apply the same transformations used during model training
+    # Apply transformations used during model training
     gdp_log = np.log1p(gdp_per_capita)
     health_exp_log = np.log1p(health_expenditure)
 
-    # Create input dataframe with exact model feature names
     input_data = pd.DataFrame([{
         "Health_Exp_Log": health_exp_log,
         "Electricity_Access_Pct": electricity_access,
@@ -42,81 +42,45 @@ def predict_life_expectancy(
         "Clean_Water_Access_Pct": clean_water_access
     }])
 
-    # Generate prediction
-    prediction = final_model.predict(input_data)[0]
-    prediction = round(float(prediction), 2)
+    # Prediction
+    prediction = float(final_model.predict(input_data)[0])
+    prediction = round(prediction, 2)
 
-    # Categorize prediction
+    # Classification
     if prediction >= 75:
         category = "High Predicted Life Expectancy"
-        color = "#22c55e"
+        category_color = "#4ade80"
 
     elif prediction >= 65:
         category = "Moderate Predicted Life Expectancy"
-        color = "#f59e0b"
+        category_color = "#fbbf24"
 
     else:
         category = "Lower Predicted Life Expectancy"
-        color = "#ef4444"
+        category_color = "#f87171"
 
     # ========================================================
-    # VISIBLE RESULT CARD
+    # RESULT CARD
     # ========================================================
 
     result_card = f"""
-    <div style="
-        width: 100%;
-        box-sizing: border-box;
-        background: linear-gradient(135deg, #172554 0%, #0f766e 100%);
-        border: 1px solid #334155;
-        border-radius: 20px;
-        padding: 35px 25px;
-        margin: 10px 0;
-        text-align: center;
-        color: white;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-    ">
+    <div class="result-card">
 
-        <div style="
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            color: #bfdbfe;
-            margin-bottom: 12px;
-        ">
+        <div class="result-label">
             ESTIMATED LIFE EXPECTANCY
         </div>
 
-        <div style="
-            font-size: 58px;
-            line-height: 1;
-            font-weight: 900;
-            color: #ffffff;
-            margin: 5px 0;
-        ">
+        <div class="result-number">
             {prediction:.2f}
         </div>
 
-        <div style="
-            font-size: 18px;
-            font-weight: 500;
-            color: #dbeafe;
-            margin-top: 8px;
-        ">
-            Years
+        <div class="result-unit">
+            YEARS
         </div>
 
-        <div style="
-            display: inline-block;
-            margin-top: 18px;
-            padding: 9px 18px;
-            border-radius: 30px;
-            background: rgba(15,23,42,0.65);
-            border: 1px solid {color};
-            color: {color};
-            font-size: 15px;
-            font-weight: 700;
-        ">
+        <div class="result-category"
+             style="color:{category_color};
+                    border-color:{category_color};">
             {category}
         </div>
 
@@ -128,19 +92,44 @@ def predict_life_expectancy(
     # ========================================================
 
     interpretation = f"""
-### Prediction Summary
+    <div class="interpretation">
 
-**Estimated Life Expectancy:** {prediction:.2f} years
+        <div class="interpretation-title">
+            Prediction Summary
+        </div>
 
-**Prediction Category:** {category}
+        <p>
+            The model estimates a life expectancy of
+            <strong>{prediction:.2f} years</strong>
+            based on the six development indicators provided.
+        </p>
 
-The estimate is generated using six development indicators from the
-World Bank World Development Indicators dataset.
+        <div class="summary-grid">
 
-**Model:** Random Forest Regressor  
-**R²:** 0.942  
-**Mean Absolute Error:** 1.14 years
-"""
+            <div>
+                <span>Model</span>
+                <strong>Random Forest</strong>
+            </div>
+
+            <div>
+                <span>R² Score</span>
+                <strong>0.942</strong>
+            </div>
+
+            <div>
+                <span>MAE</span>
+                <strong>1.14 years</strong>
+            </div>
+
+            <div>
+                <span>RMSE</span>
+                <strong>2.02 years</strong>
+            </div>
+
+        </div>
+
+    </div>
+    """
 
     return result_card, interpretation
 
@@ -155,10 +144,15 @@ custom_css = """
    GLOBAL
    ========================================================== */
 
+body {
+    background: #020617 !important;
+}
+
 .gradio-container {
-    background: #0b1120 !important;
+    background: #020617 !important;
     color: #f8fafc !important;
-    font-family: Inter, Arial, sans-serif !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    max-width: 1200px !important;
 }
 
 
@@ -167,42 +161,40 @@ custom_css = """
    ========================================================== */
 
 .hero {
-    background:
-        linear-gradient(
-            135deg,
-            #172554 0%,
-            #1e3a8a 45%,
-            #0f766e 100%
-        );
+    background: linear-gradient(
+        135deg,
+        #172554 0%,
+        #1e3a8a 50%,
+        #0f766e 100%
+    );
 
-    padding: 38px;
-    border-radius: 22px;
-    margin-bottom: 24px;
+    padding: 32px;
+    border-radius: 20px;
+    margin-bottom: 22px;
 
     border: 1px solid #334155;
 
-    box-shadow:
-        0 10px 30px rgba(0,0,0,0.30);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 .hero-title {
-    font-size: 40px;
+    color: #ffffff !important;
+    font-size: 36px;
     font-weight: 800;
-    color: #ffffff;
-    line-height: 1.15;
+    line-height: 1.2;
 }
 
 .hero-subtitle {
-    color: #bfdbfe;
-    font-size: 18px;
-    margin-top: 10px;
+    color: #bfdbfe !important;
+    font-size: 17px;
+    margin-top: 8px;
 }
 
-.hero-text {
-    color: #dbeafe;
-    margin-top: 15px;
-    font-size: 15px;
+.hero-description {
+    color: #dbeafe !important;
+    font-size: 14px;
     line-height: 1.6;
+    margin-top: 14px;
 }
 
 
@@ -211,10 +203,28 @@ custom_css = """
    ========================================================== */
 
 .card {
-    background: #111827 !important;
+    background: #0f172a !important;
     border: 1px solid #334155 !important;
-    border-radius: 20px !important;
+    border-radius: 18px !important;
     padding: 22px !important;
+}
+
+
+/* ==========================================================
+   SECTION HEADINGS
+   ========================================================== */
+
+.section-title {
+    color: #ffffff !important;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.section-subtitle {
+    color: #94a3b8 !important;
+    font-size: 13px;
+    margin-bottom: 18px;
 }
 
 
@@ -223,30 +233,64 @@ custom_css = """
    ========================================================== */
 
 .metric-card {
-    background: #111827;
-
+    background: #0f172a;
     border: 1px solid #334155;
-
-    border-radius: 16px;
-
+    border-radius: 14px;
+    padding: 16px;
     text-align: center;
-
-    padding: 17px;
-
-    min-height: 75px;
+    min-height: 72px;
 }
 
 .metric-title {
-    color: #60a5fa;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 5px;
+    color: #60a5fa !important;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
 }
 
 .metric-value {
-    color: #f8fafc;
-    font-size: 23px;
+    color: #ffffff !important;
+    font-size: 21px;
     font-weight: 800;
+    margin-top: 5px;
+}
+
+
+/* ==========================================================
+   INPUT LABELS
+   ========================================================== */
+
+.gradio-container label {
+    color: #e2e8f0 !important;
+}
+
+.gradio-container label span {
+    color: #e2e8f0 !important;
+}
+
+
+/* ==========================================================
+   INPUT BOXES
+   ========================================================== */
+
+.gradio-container input {
+    background: #111827 !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+    border-radius: 10px !important;
+}
+
+.gradio-container input:focus {
+    border-color: #38bdf8 !important;
+}
+
+
+/* ==========================================================
+   NUMBER INPUT TEXT
+   ========================================================== */
+
+.gradio-container input[type="number"] {
+    color: #ffffff !important;
 }
 
 
@@ -255,49 +299,190 @@ custom_css = """
    ========================================================== */
 
 #predict-button {
-    background:
-        linear-gradient(
-            135deg,
-            #2563eb,
-            #06b6d4
-        ) !important;
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #0891b2
+    ) !important;
 
     color: #ffffff !important;
 
     border: none !important;
 
-    border-radius: 12px !important;
+    border-radius: 11px !important;
 
-    font-weight: 700 !important;
+    font-weight: 800 !important;
 
     height: 52px;
 
-    margin-top: 10px;
+    margin-top: 12px;
 
-    box-shadow:
-        0 5px 18px rgba(37,99,235,0.25);
+    box-shadow: 0 5px 18px rgba(37,99,235,0.25);
 }
 
 #predict-button:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.1);
 }
 
 
 /* ==========================================================
-   INPUT LABELS
+   RESULT CARD
    ========================================================== */
 
-label {
+.result-card {
+    width: 100%;
+    box-sizing: border-box;
+
+    background: linear-gradient(
+        135deg,
+        #172554 0%,
+        #0f766e 100%
+    );
+
+    border: 1px solid #475569;
+    border-radius: 18px;
+
+    padding: 35px 20px;
+
+    text-align: center;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+
+    margin-bottom: 15px;
+}
+
+.result-label {
+    color: #bfdbfe !important;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.result-number {
+    color: #ffffff !important;
+    font-size: 56px;
+    font-weight: 900;
+    line-height: 1;
+    margin-top: 12px;
+}
+
+.result-unit {
+    color: #dbeafe !important;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.result-category {
+    display: inline-block;
+
+    margin-top: 18px;
+
+    padding: 8px 16px;
+
+    border-radius: 30px;
+
+    background: rgba(2, 6, 23, 0.55);
+
+    border: 1px solid;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   INTERPRETATION
+   ========================================================== */
+
+.interpretation {
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 14px;
+
+    padding: 18px;
+
     color: #cbd5e1 !important;
+
+    line-height: 1.6;
+}
+
+.interpretation-title {
+    color: #ffffff !important;
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.interpretation strong {
+    color: #ffffff !important;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+.summary-grid div {
+    background: #0f172a;
+
+    border: 1px solid #334155;
+
+    border-radius: 9px;
+
+    padding: 10px;
+
+    text-align: center;
+}
+
+.summary-grid span {
+    display: block;
+
+    color: #94a3b8 !important;
+
+    font-size: 11px;
+}
+
+.summary-grid strong {
+    display: block;
+
+    color: #f8fafc !important;
+
+    font-size: 14px;
+
+    margin-top: 3px;
 }
 
 
 /* ==========================================================
-   SLIDERS
+   EXAMPLES
    ========================================================== */
 
-input[type="range"] {
-    accent-color: #38bdf8;
+.examples-title {
+    color: #ffffff !important;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 25px 0 12px;
+}
+
+
+/* ==========================================================
+   ACCORDION
+   ========================================================== */
+
+.gradio-container .accordion {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+.gradio-container .accordion button {
+    color: #ffffff !important;
 }
 
 
@@ -307,7 +492,7 @@ input[type="range"] {
 
 .footer {
     text-align: center;
-    color: #64748b;
+    color: #64748b !important;
     margin-top: 25px;
     padding: 15px;
     font-size: 12px;
@@ -317,12 +502,13 @@ input[type="range"] {
 
 
 # ============================================================
-# APP
+# APPLICATION
 # ============================================================
 
 with gr.Blocks(
     theme=gr.themes.Soft(
         primary_hue="blue",
+        secondary_hue="cyan",
         neutral_hue="slate"
     ),
     css=custom_css,
@@ -333,80 +519,75 @@ with gr.Blocks(
     # HERO
     # ========================================================
 
-    gr.HTML(
-        """
-        <div class="hero">
+    gr.HTML("""
+    <div class="hero">
 
-            <div class="hero-title">
-                🌍 Life Expectancy Prediction Dashboard
-            </div>
-
-            <div class="hero-subtitle">
-                World Bank World Development Indicators
-            </div>
-
-            <div class="hero-text">
-                Explore how health, economic, education, and
-                infrastructure indicators relate to predicted
-                life expectancy.
-            </div>
-
+        <div class="hero-title">
+            🌍 Life Expectancy Prediction Dashboard
         </div>
-        """
-    )
+
+        <div class="hero-subtitle">
+            World Bank World Development Indicators
+        </div>
+
+        <div class="hero-description">
+            Predict life expectancy using health, economic,
+            education, and infrastructure indicators.
+        </div>
+
+    </div>
+    """)
 
 
     # ========================================================
     # MODEL PERFORMANCE
     # ========================================================
 
+    gr.HTML("""
+    <div class="section-title">
+        Model Performance
+    </div>
+    """)
+
     with gr.Row():
 
-        gr.HTML(
-            """
-            <div class="metric-card">
-                <div class="metric-title">MODEL</div>
-                <div class="metric-value">Random Forest</div>
-            </div>
-            """
-        )
+        gr.HTML("""
+        <div class="metric-card">
+            <div class="metric-title">MODEL</div>
+            <div class="metric-value">Random Forest</div>
+        </div>
+        """)
 
-        gr.HTML(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">R² SCORE</div>
-                <div class="metric-value">{MODEL_R2:.3f}</div>
-            </div>
-            """
-        )
+        gr.HTML(f"""
+        <div class="metric-card">
+            <div class="metric-title">R² SCORE</div>
+            <div class="metric-value">{MODEL_R2:.3f}</div>
+        </div>
+        """)
 
-        gr.HTML(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">RMSE</div>
-                <div class="metric-value">{MODEL_RMSE:.2f}</div>
-            </div>
-            """
-        )
+        gr.HTML(f"""
+        <div class="metric-card">
+            <div class="metric-title">RMSE</div>
+            <div class="metric-value">{MODEL_RMSE:.2f}</div>
+        </div>
+        """)
 
-        gr.HTML(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">MAE</div>
-                <div class="metric-value">{MODEL_MAE:.2f} yrs</div>
-            </div>
-            """
-        )
+        gr.HTML(f"""
+        <div class="metric-card">
+            <div class="metric-title">MAE</div>
+            <div class="metric-value">{MODEL_MAE:.2f} yrs</div>
+        </div>
+        """)
 
 
     # ========================================================
-    # MAIN CONTENT
+    # MAIN DASHBOARD
     # ========================================================
 
     with gr.Row():
 
         # ----------------------------------------------------
-        # INPUT SECTION
+        # INPUTS
         # ----------------------------------------------------
 
         with gr.Column(
@@ -414,7 +595,15 @@ with gr.Blocks(
             elem_classes="card"
         ):
 
-            gr.Markdown("## Development Indicators")
+            gr.HTML("""
+            <div class="section-title">
+                Development Indicators
+            </div>
+
+            <div class="section-subtitle">
+                Enter values for the six indicators used by the model.
+            </div>
+            """)
 
             health_expenditure = gr.Number(
                 label="🏥 Health Expenditure per Capita (USD)",
@@ -422,20 +611,18 @@ with gr.Blocks(
                 minimum=0
             )
 
-            electricity_access = gr.Slider(
-                minimum=0,
-                maximum=100,
+            electricity_access = gr.Number(
+                label="⚡ Electricity Access (% of Population)",
                 value=75,
-                step=1,
-                label="⚡ Electricity Access (%)"
+                minimum=0,
+                maximum=100
             )
 
-            primary_completion = gr.Slider(
-                minimum=0,
-                maximum=100,
+            primary_completion = gr.Number(
+                label="🎓 Primary Completion Rate (%)",
                 value=85,
-                step=1,
-                label="🎓 Primary Completion Rate (%)"
+                minimum=0,
+                maximum=100
             )
 
             gdp_per_capita = gr.Number(
@@ -445,17 +632,16 @@ with gr.Blocks(
             )
 
             maternal_mortality = gr.Number(
-                label="👩 Maternal Mortality Rate (per 100k)",
+                label="👩 Maternal Mortality Rate (per 100,000)",
                 value=150,
                 minimum=0
             )
 
-            clean_water_access = gr.Slider(
-                minimum=0,
-                maximum=100,
+            clean_water_access = gr.Number(
+                label="💧 Clean Water Access (% of Population)",
                 value=80,
-                step=1,
-                label="💧 Clean Water Access (%)"
+                minimum=0,
+                maximum=100
             )
 
             predict_button = gr.Button(
@@ -467,7 +653,7 @@ with gr.Blocks(
 
 
         # ----------------------------------------------------
-        # RESULT SECTION
+        # RESULTS
         # ----------------------------------------------------
 
         with gr.Column(
@@ -475,54 +661,57 @@ with gr.Blocks(
             elem_classes="card"
         ):
 
-            gr.Markdown("## Prediction Result")
+            gr.HTML("""
+            <div class="section-title">
+                Prediction Result
+            </div>
+            """)
 
-            prediction_card = gr.HTML(
-                value="""
-                <div style="
-                    background:#111827;
-                    border:1px solid #334155;
-                    border-radius:20px;
-                    padding:45px 20px;
-                    text-align:center;
-                    color:#94a3b8;
-                ">
+            prediction_card = gr.HTML("""
+            <div class="result-card">
 
-                    <div style="
-                        font-size:13px;
-                        letter-spacing:1px;
-                        font-weight:700;
-                        margin-bottom:12px;
-                    ">
-                        PREDICTION RESULT
-                    </div>
-
-                    <div style="
-                        font-size:16px;
-                        line-height:1.5;
-                    ">
-                        Enter the development indicators
-                        and click <b>Predict Life Expectancy</b>.
-                    </div>
-
+                <div class="result-label">
+                    PREDICTION RESULT
                 </div>
-                """
-            )
 
-            interpretation = gr.Markdown(
-                """
-### Prediction Summary
+                <div style="
+                    color:#cbd5e1;
+                    font-size:15px;
+                    margin-top:15px;
+                    line-height:1.6;
+                ">
+                    Enter the development indicators
+                    and click <strong>Predict Life Expectancy</strong>.
+                </div>
 
-Your prediction will appear here after running the model.
-"""
-            )
+            </div>
+            """)
+
+            interpretation = gr.HTML("""
+            <div class="interpretation">
+
+                <div class="interpretation-title">
+                    Prediction Summary
+                </div>
+
+                <p>
+                    Your prediction will appear here after
+                    running the model.
+                </p>
+
+            </div>
+            """)
 
 
     # ========================================================
     # EXAMPLE SCENARIOS
     # ========================================================
 
-    gr.Markdown("## Example Development Profiles")
+    gr.HTML("""
+    <div class="examples-title">
+        Example Development Profiles
+    </div>
+    """)
 
     gr.Examples(
         examples=[
@@ -543,7 +732,7 @@ Your prediction will appear here after running the model.
 
 
     # ========================================================
-    # ABOUT THE MODEL
+    # ABOUT
     # ========================================================
 
     with gr.Accordion(
@@ -551,8 +740,7 @@ Your prediction will appear here after running the model.
         open=False
     ):
 
-        gr.Markdown(
-            """
+        gr.Markdown("""
 ### Model Inputs
 
 - Health Expenditure Per Capita
@@ -574,24 +762,22 @@ Your prediction will appear here after running the model.
 
 **Random Forest Regressor**
 
-The model was trained using development indicators from
-2000–2022. GDP per capita and health expenditure were
-log-transformed before modeling.
-"""
-        )
+GDP per capita and health expenditure were log-transformed
+before modeling.
+
+The model was evaluated using an 80/20 train-test split.
+""")
 
 
     # ========================================================
     # FOOTER
     # ========================================================
 
-    gr.HTML(
-        """
-        <div class="footer">
-            Life Expectancy Prediction Model • World Bank WDI
-        </div>
-        """
-    )
+    gr.HTML("""
+    <div class="footer">
+        Life Expectancy Prediction • World Bank WDI
+    </div>
+    """)
 
 
     # ========================================================
