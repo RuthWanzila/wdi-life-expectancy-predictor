@@ -53,57 +53,32 @@ def predict_life_expectancy(
         category = "Lower Predicted Life Expectancy"
         color = "#ef4444"
 
-   result_card = f"""
-<div style="
-    background: #111827;
-    border: 1px solid #374151;
-    border-radius: 16px;
-    padding: 30px 24px;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-    color: #ffffff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-">
+    result_card = f"""
+    <div class='result-card'>
 
-    <div style="
-        color: #9ca3af;
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 1.5px;
-        margin-bottom: 12px;
-    ">
-        ESTIMATED LIFE EXPECTANCY
-    </div>
+        <div class='result-value'>
+            {prediction:.2f}
+        </div>
 
-    <div style="
-        color: #38bdf8;
-        font-size: 52px;
-        font-weight: 800;
-        line-height: 1.1;
-    ">
-        {prediction:.2f}
-    </div>
+        <div class='result-unit'>
+            Years
+        </div>
 
-    <div style="
-        color: #d1d5db;
-        font-size: 16px;
-        margin-top: 4px;
-    ">
-        Years
-    </div>
+        <div
+        style='
+        color:{color};
+        font-weight:700;
+        font-size:18px;
+        margin-top:10px;
+        '>
 
-    <div style="
-        color: {color};
-        font-weight: 700;
-        font-size: 18px;
-        margin-top: 18px;
-    ">
         {category}
-    </div>
 
-</div>
-"""
+        </div>
+
+    </div>
+    """
+
     interpretation = f"""
 ### Model Assessment
 
