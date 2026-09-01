@@ -66,7 +66,7 @@ def predict_life_expectancy(
 
         <div
         style='
-        color:{color};
+        color:{red};
         font-weight:700;
         font-size:18px;
         margin-top:10px;
