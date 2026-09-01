@@ -2,6 +2,7 @@ import gradio as gr
 import numpy as np
 import pandas as pd
 import joblib
+import os
 
 # ============================================================
 # LOAD BEST MODEL
@@ -12,6 +13,7 @@ final_model = joblib.load("random_forest_model.joblib")
 MODEL_R2 = 0.9422
 MODEL_RMSE = 2.02
 MODEL_MAE = 1.14
+
 
 # ============================================================
 # PREDICTION FUNCTION
@@ -26,9 +28,11 @@ def predict_life_expectancy(
     clean_water_access
 ):
 
+    # Apply the same transformations used during model training
     gdp_log = np.log1p(gdp_per_capita)
     health_exp_log = np.log1p(health_expenditure)
 
+    # Create input dataframe with exact model feature names
     input_data = pd.DataFrame([{
         "Health_Exp_Log": health_exp_log,
         "Electricity_Access_Pct": electricity_access,
@@ -38,9 +42,11 @@ def predict_life_expectancy(
         "Clean_Water_Access_Pct": clean_water_access
     }])
 
+    # Generate prediction
     prediction = final_model.predict(input_data)[0]
     prediction = round(float(prediction), 2)
 
+    # Categorize prediction
     if prediction >= 75:
         category = "High Predicted Life Expectancy"
         color = "#22c55e"
@@ -53,42 +59,87 @@ def predict_life_expectancy(
         category = "Lower Predicted Life Expectancy"
         color = "#ef4444"
 
-    result_card = f"""
-    <div class='result-card'>
+    # ========================================================
+    # VISIBLE RESULT CARD
+    # ========================================================
 
-        <div class='result-value'>
+    result_card = f"""
+    <div style="
+        width: 100%;
+        box-sizing: border-box;
+        background: linear-gradient(135deg, #172554 0%, #0f766e 100%);
+        border: 1px solid #334155;
+        border-radius: 20px;
+        padding: 35px 25px;
+        margin: 10px 0;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+    ">
+
+        <div style="
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #bfdbfe;
+            margin-bottom: 12px;
+        ">
+            ESTIMATED LIFE EXPECTANCY
+        </div>
+
+        <div style="
+            font-size: 58px;
+            line-height: 1;
+            font-weight: 900;
+            color: #ffffff;
+            margin: 5px 0;
+        ">
             {prediction:.2f}
         </div>
 
-        <div class='result-unit'>
+        <div style="
+            font-size: 18px;
+            font-weight: 500;
+            color: #dbeafe;
+            margin-top: 8px;
+        ">
             Years
         </div>
 
-        <div
-        style='
-        color:{color};
-        font-weight:700;
-        font-size:18px;
-        margin-top:10px;
-        '>
-
-        {category}
-
+        <div style="
+            display: inline-block;
+            margin-top: 18px;
+            padding: 9px 18px;
+            border-radius: 30px;
+            background: rgba(15,23,42,0.65);
+            border: 1px solid {color};
+            color: {color};
+            font-size: 15px;
+            font-weight: 700;
+        ">
+            {category}
         </div>
 
     </div>
     """
 
+    # ========================================================
+    # INTERPRETATION
+    # ========================================================
+
     interpretation = f"""
-### Model Assessment
+### Prediction Summary
 
 **Estimated Life Expectancy:** {prediction:.2f} years
 
-**Category:** {category}
+**Prediction Category:** {category}
 
-The prediction is generated using health, education, economic,
-infrastructure, and development indicators from the World Bank
-World Development Indicators dataset.
+The estimate is generated using six development indicators from the
+World Bank World Development Indicators dataset.
+
+**Model:** Random Forest Regressor  
+**R²:** 0.942  
+**Mean Absolute Error:** 1.14 years
 """
 
     return result_card, interpretation
@@ -100,146 +151,166 @@ World Development Indicators dataset.
 
 custom_css = """
 
-.gradio-container{
-    background:#0f172a;
-    color:white;
-    font-family:Inter, Arial, sans-serif;
+/* ==========================================================
+   GLOBAL
+   ========================================================== */
+
+.gradio-container {
+    background: #0b1120 !important;
+    color: #f8fafc !important;
+    font-family: Inter, Arial, sans-serif !important;
 }
 
-/* Hero */
 
-.hero{
+/* ==========================================================
+   HERO
+   ========================================================== */
+
+.hero {
     background:
-    linear-gradient(
-    135deg,
-    #1e3a8a,
-    #0ea5e9
-    );
+        linear-gradient(
+            135deg,
+            #172554 0%,
+            #1e3a8a 45%,
+            #0f766e 100%
+        );
 
-    padding:40px;
+    padding: 38px;
+    border-radius: 22px;
+    margin-bottom: 24px;
 
-    border-radius:24px;
-
-    margin-bottom:25px;
+    border: 1px solid #334155;
 
     box-shadow:
-    0 10px 30px rgba(0,0,0,.25);
+        0 10px 30px rgba(0,0,0,0.30);
 }
 
-.hero-title{
-    font-size:42px;
-    font-weight:800;
-    color:white;
+.hero-title {
+    font-size: 40px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
 }
 
-.hero-subtitle{
-    color:#dbeafe;
-    font-size:18px;
-    margin-top:8px;
+.hero-subtitle {
+    color: #bfdbfe;
+    font-size: 18px;
+    margin-top: 10px;
 }
 
-.hero-text{
-    color:#e0f2fe;
-    margin-top:15px;
+.hero-text {
+    color: #dbeafe;
+    margin-top: 15px;
+    font-size: 15px;
+    line-height: 1.6;
 }
 
-/* Cards */
 
-.card{
-    background:#111827;
-    border:1px solid #334155;
-    border-radius:20px;
-    padding:22px;
+/* ==========================================================
+   CARDS
+   ========================================================== */
+
+.card {
+    background: #111827 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 20px !important;
+    padding: 22px !important;
 }
 
-/* Buttons */
 
-#predict-button{
+/* ==========================================================
+   MODEL METRICS
+   ========================================================== */
+
+.metric-card {
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 16px;
+
+    text-align: center;
+
+    padding: 17px;
+
+    min-height: 75px;
+}
+
+.metric-title {
+    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.metric-value {
+    color: #f8fafc;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   BUTTON
+   ========================================================== */
+
+#predict-button {
     background:
-    linear-gradient(
-    135deg,
-    #2563eb,
-    #06b6d4
-    );
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #06b6d4
+        ) !important;
 
-    color:white !important;
+    color: #ffffff !important;
 
-    border:none !important;
+    border: none !important;
 
-    border-radius:14px !important;
+    border-radius: 12px !important;
 
-    font-weight:700 !important;
+    font-weight: 700 !important;
 
-    height:52px;
-}
+    height: 52px;
 
-#predict-button:hover{
-    transform:translateY(-2px);
-}
-
-/* Metric Cards */
-
-.metric-card{
-    background:#111827;
-    border:1px solid #334155;
-    border-radius:18px;
-
-    text-align:center;
-
-    padding:16px;
-}
-
-.metric-title{
-    color:#60a5fa;
-    font-size:14px;
-    font-weight:600;
-}
-
-.metric-value{
-    color:white;
-    font-size:24px;
-    font-weight:800;
-}
-
-/* Result Card */
-
-.result-card{
-
-    background:
-    linear-gradient(
-    135deg,
-    #172554,
-    #0f766e
-    );
-
-    border-radius:24px;
-
-    padding:35px;
-
-    text-align:center;
+    margin-top: 10px;
 
     box-shadow:
-    0 6px 20px rgba(0,0,0,0.25);
+        0 5px 18px rgba(37,99,235,0.25);
 }
 
-.result-value{
-    font-size:64px;
-    font-weight:900;
-    color:white;
+#predict-button:hover {
+    filter: brightness(1.08);
 }
 
-.result-unit{
-    font-size:20px;
-    color:#dbeafe;
+
+/* ==========================================================
+   INPUT LABELS
+   ========================================================== */
+
+label {
+    color: #cbd5e1 !important;
 }
 
-/* Footer */
 
-.footer{
-    text-align:center;
-    color:#94a3b8;
-    margin-top:20px;
-    font-size:13px;
+/* ==========================================================
+   SLIDERS
+   ========================================================== */
+
+input[type="range"] {
+    accent-color: #38bdf8;
+}
+
+
+/* ==========================================================
+   FOOTER
+   ========================================================== */
+
+.footer {
+    text-align: center;
+    color: #64748b;
+    margin-top: 25px;
+    padding: 15px;
+    font-size: 12px;
 }
 
 """
@@ -250,7 +321,10 @@ custom_css = """
 # ============================================================
 
 with gr.Blocks(
-    theme=gr.themes.Soft(),
+    theme=gr.themes.Soft(
+        primary_hue="blue",
+        neutral_hue="slate"
+    ),
     css=custom_css,
     title="Life Expectancy Prediction Dashboard"
 ) as demo:
@@ -268,90 +342,97 @@ with gr.Blocks(
             </div>
 
             <div class="hero-subtitle">
-                World Bank World Development Indicators (WDI)
+                World Bank World Development Indicators
             </div>
 
             <div class="hero-text">
-                Explore the relationship between development indicators
-                and predicted life expectancy using a machine learning model.
+                Explore how health, economic, education, and
+                infrastructure indicators relate to predicted
+                life expectancy.
             </div>
 
         </div>
         """
     )
 
+
     # ========================================================
-    # MODEL METRICS
+    # MODEL PERFORMANCE
     # ========================================================
 
     with gr.Row():
 
         gr.HTML(
-            f"""
-            <div class='metric-card'>
-                <div class='metric-title'>Model</div>
-                <div class='metric-value'>Random Forest</div>
+            """
+            <div class="metric-card">
+                <div class="metric-title">MODEL</div>
+                <div class="metric-value">Random Forest</div>
             </div>
             """
         )
 
         gr.HTML(
             f"""
-            <div class='metric-card'>
-                <div class='metric-title'>R²</div>
-                <div class='metric-value'>{MODEL_R2:.3f}</div>
+            <div class="metric-card">
+                <div class="metric-title">R² SCORE</div>
+                <div class="metric-value">{MODEL_R2:.3f}</div>
             </div>
             """
         )
 
         gr.HTML(
             f"""
-            <div class='metric-card'>
-                <div class='metric-title'>RMSE</div>
-                <div class='metric-value'>{MODEL_RMSE:.2f}</div>
+            <div class="metric-card">
+                <div class="metric-title">RMSE</div>
+                <div class="metric-value">{MODEL_RMSE:.2f}</div>
             </div>
             """
         )
 
         gr.HTML(
             f"""
-            <div class='metric-card'>
-                <div class='metric-title'>MAE</div>
-                <div class='metric-value'>{MODEL_MAE:.2f}</div>
+            <div class="metric-card">
+                <div class="metric-title">MAE</div>
+                <div class="metric-value">{MODEL_MAE:.2f} yrs</div>
             </div>
             """
         )
+
 
     # ========================================================
-    # MAIN LAYOUT
+    # MAIN CONTENT
     # ========================================================
 
     with gr.Row():
 
         # ----------------------------------------------------
-        # INPUTS
+        # INPUT SECTION
         # ----------------------------------------------------
 
-        with gr.Column(scale=1, elem_classes="card"):
+        with gr.Column(
+            scale=1,
+            elem_classes="card"
+        ):
 
             gr.Markdown("## Development Indicators")
 
             health_expenditure = gr.Number(
                 label="🏥 Health Expenditure per Capita (USD)",
-                value=350
+                value=350,
+                minimum=0
             )
 
             electricity_access = gr.Slider(
-                0,
-                100,
+                minimum=0,
+                maximum=100,
                 value=75,
                 step=1,
                 label="⚡ Electricity Access (%)"
             )
 
             primary_completion = gr.Slider(
-                0,
-                100,
+                minimum=0,
+                maximum=100,
                 value=85,
                 step=1,
                 label="🎓 Primary Completion Rate (%)"
@@ -359,17 +440,19 @@ with gr.Blocks(
 
             gdp_per_capita = gr.Number(
                 label="💰 GDP per Capita (USD)",
-                value=5000
+                value=5000,
+                minimum=0
             )
 
             maternal_mortality = gr.Number(
-                label="👩 Maternal Mortality Rate",
-                value=150
+                label="👩 Maternal Mortality Rate (per 100k)",
+                value=150,
+                minimum=0
             )
 
             clean_water_access = gr.Slider(
-                0,
-                100,
+                minimum=0,
+                maximum=100,
                 value=80,
                 step=1,
                 label="💧 Clean Water Access (%)"
@@ -377,33 +460,77 @@ with gr.Blocks(
 
             predict_button = gr.Button(
                 "Predict Life Expectancy",
+                variant="primary",
+                size="lg",
                 elem_id="predict-button"
             )
 
+
         # ----------------------------------------------------
-        # OUTPUTS
+        # RESULT SECTION
         # ----------------------------------------------------
 
-        with gr.Column(scale=1, elem_classes="card"):
+        with gr.Column(
+            scale=1,
+            elem_classes="card"
+        ):
 
             gr.Markdown("## Prediction Result")
 
-            prediction_card = gr.HTML()
+            prediction_card = gr.HTML(
+                value="""
+                <div style="
+                    background:#111827;
+                    border:1px solid #334155;
+                    border-radius:20px;
+                    padding:45px 20px;
+                    text-align:center;
+                    color:#94a3b8;
+                ">
 
-            interpretation = gr.Markdown()
+                    <div style="
+                        font-size:13px;
+                        letter-spacing:1px;
+                        font-weight:700;
+                        margin-bottom:12px;
+                    ">
+                        PREDICTION RESULT
+                    </div>
+
+                    <div style="
+                        font-size:16px;
+                        line-height:1.5;
+                    ">
+                        Enter the development indicators
+                        and click <b>Predict Life Expectancy</b>.
+                    </div>
+
+                </div>
+                """
+            )
+
+            interpretation = gr.Markdown(
+                """
+### Prediction Summary
+
+Your prediction will appear here after running the model.
+"""
+            )
+
 
     # ========================================================
-    # EXAMPLES
+    # EXAMPLE SCENARIOS
     # ========================================================
 
     gr.Markdown("## Example Development Profiles")
 
     gr.Examples(
         examples=[
-            [100,30,60,1200,550,45],
-            [450,85,88,6500,180,82],
-            [4500,99,98,45000,12,99]
+            [100, 30, 60, 1200, 550, 45],
+            [450, 85, 88, 6500, 180, 82],
+            [4500, 99, 98, 45000, 12, 99]
         ],
+
         inputs=[
             health_expenditure,
             electricity_access,
@@ -414,8 +541,9 @@ with gr.Blocks(
         ]
     )
 
+
     # ========================================================
-    # ABOUT MODEL
+    # ABOUT THE MODEL
     # ========================================================
 
     with gr.Accordion(
@@ -425,7 +553,7 @@ with gr.Blocks(
 
         gr.Markdown(
             """
-### Inputs
+### Model Inputs
 
 - Health Expenditure Per Capita
 - Electricity Access
@@ -434,19 +562,24 @@ with gr.Blocks(
 - Maternal Mortality Rate
 - Clean Water Access
 
-### Target Variable
+### Target
 
-Life Expectancy at Birth (Years)
+**Life Expectancy at Birth (Years)**
 
 ### Dataset
 
-World Bank World Development Indicators (WDI)
+**World Bank World Development Indicators (WDI)**
 
 ### Model
 
-Random Forest Regressor
+**Random Forest Regressor**
+
+The model was trained using development indicators from
+2000–2022. GDP per capita and health expenditure were
+log-transformed before modeling.
 """
         )
+
 
     # ========================================================
     # FOOTER
@@ -454,18 +587,20 @@ Random Forest Regressor
 
     gr.HTML(
         """
-        <div class='footer'>
-            AnalystLab Africa Data Science Capstone Project
+        <div class="footer">
+            Life Expectancy Prediction Model • World Bank WDI
         </div>
         """
     )
 
+
     # ========================================================
-    # EVENTS
+    # EVENT
     # ========================================================
 
     predict_button.click(
         fn=predict_life_expectancy,
+
         inputs=[
             health_expenditure,
             electricity_access,
@@ -474,16 +609,17 @@ Random Forest Regressor
             maternal_mortality,
             clean_water_access
         ],
+
         outputs=[
             prediction_card,
             interpretation
         ]
     )
 
+
 # ============================================================
 # LAUNCH
 # ============================================================
-import os
 
 demo.launch(
     server_name="0.0.0.0",
